@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="description" content="TailorPro aide les tailleurs et ateliers de couture à organiser leurs clients, leurs mesures, leurs commandes et leurs paiements.">
+    <title>TAILORPRO — Gérez votre atelier. Simplifiez vos commandes.</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="module">
+      if (window.location.protocol === "file:") {
+        const localScript = document.createElement("script");
+        localScript.src = "./script.js";
+        document.head.append(localScript);
+      } else {
+        import("./script.js");
+        import("./src/main.jsx");
+      }
+    </script>
+  </head>
+  <body>
+    <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <symbol id="i-needle" viewBox="0 0 24 24"><path d="M15.5 3.5a3 3 0 0 1 4.2 4.2L7 20.4 3.5 20.5l.1-3.5L15.5 3.5Z"/><path d="m14.1 4.9 5 5M6.2 17.8l-1.7-1.7"/></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+      <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"/><path d="m19 15 .9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></symbol>
+      <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></symbol>
+      <symbol id="i-ruler" viewBox="0 0 24 24"><path d="m3 16 13-13 5 5L8 21l-5-5Z"/><path d="m14 5 5 5M11 8l2 2M8 11l2 2M5 14l2 2"/></symbol>
+      <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="m8.1 8.1 12.8 12.8M14.5 9.5 20 4M8.1 15.9 12 12"/></symbol>
+      <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 14h5M3 9h18"/><circle cx="16" cy="14" r=".6"/></symbol>
+      <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18M18 17V9M13 17V5M8 17v-3"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+      <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></symbol>
+      <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="m18 6-12 12M6 6l12 12"/></symbol>
+      <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></symbol>
+      <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 17l9 5 9-5"/></symbol>
+    </svg>
+
+    <header class="site-header">
+      <div class="container nav-wrap">
+        <a class="brand" href="#accueil" aria-label="TailorPro, accueil">
+          <span class="brand-mark"><svg class="icon"><use href="#i-needle"/></svg></span>
+          <span>TAILOR<span class="brand-accent">PRO</span></span>
+        </a>
+        <button class="menu-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="primary-navigation">
+          <svg class="icon menu-open-icon"><use href="#i-menu"/></svg>
+          <svg class="icon menu-close-icon"><use href="#i-close"/></svg>
+        </button>
+        <nav class="navigation" id="primary-navigation" aria-label="Navigation principale">
+          <a href="#accueil">Accueil</a>
+          <a href="#fonctionnalites">Fonctionnalités</a>
+          <a href="#comment-ca-marche">Comment ça marche</a>
+          <a href="#tarifs">Tarifs</a>
+          <a href="#faq">FAQ</a>
+          <div class="mobile-nav-actions">
+            <a class="button button-quiet" href="#cta" data-app-route="/login">Se connecter</a>
+            <a class="button button-primary" href="#cta" data-app-route="/register?plan=free">Commencer gratuitement</a>
+          </div>
+        </nav>
+        <div class="nav-actions">
+          <a class="button button-quiet" href="#cta" data-app-route="/login">Se connecter</a>
+          <a class="button button-primary button-small" href="#cta" data-app-route="/register?plan=free">Commencer gratuitement</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero section-pad" id="accueil">
+        <div class="container hero-layout">
+          <div class="hero-copy">
+            <div class="eyebrow"><span class="eyebrow-dot"></span> LE GESTIONNAIRE SIMPLE POUR VOTRE ATELIER</div>
+            <h1>Votre atelier de couture, <span>mieux organisé.</span></h1>
+            <p class="hero-lead">Gérez vos clients, vos mesures, vos commandes et vos paiements au même endroit. Gagnez du temps et concentrez-vous sur ce que vous faites de mieux : créer de beaux vêtements.</p>
+            <div class="hero-actions">
+              <a class="button button-primary button-large" href="#cta" data-app-route="/register?plan=free">Commencer gratuitement <svg class="icon"><use href="#i-arrow"/></svg></a>
+              <a class="button button-outline button-large" href="#fonctionnalites">Découvrir les fonctionnalités</a>
+            </div>
+            <div class="hero-note"><svg class="icon"><use href="#i-check"/></svg> Gratuit pour commencer <span>·</span> Sans carte bancaire</div>
+            <div class="hero-proof">
+              <div class="proof-avatars" aria-hidden="true"><span>A</span><span>M</span><span>F</span></div>
+              <p><strong>Une organisation cousue pour vous.</strong><br>Simple, pratique et pensée pour votre quotidien.</p>
+            </div>
+          </div>
+
+          <div class="dashboard-scene" aria-label="Aperçu illustratif du tableau de bord TailorPro, avec des données de démonstration">
+            <div class="scene-decoration scene-decoration-one"></div>
+            <div class="scene-decoration scene-decoration-two"></div>
+            <div class="dashboard">
+              <aside class="dash-sidebar">
+                <div class="dash-logo"><span class="dash-logo-mark"><svg class="icon"><use href="#i-needle"/></svg></span><span>TAILOR<span>PRO</span></span></div>
+                <div class="dash-shop"><div class="shop-avatar">A</div><div><strong>Atelier Aïssatou</strong><small>Offre Démonstration</small></div><span class="shop-caret">⌄</span></div>
+                <div class="dash-label">ESPACE DE TRAVAIL</div>
+                <div class="dash-nav-item active"><svg class="icon"><use href="#i-chart"/></svg> Vue d'ensemble</div>
+                <div class="dash-nav-item"><svg class="icon"><use href="#i-scissors"/></svg> Commandes <span class="nav-count">8</span></div>
+                <div class="dash-nav-item"><svg class="icon"><use href="#i-users"/></svg> Clients</div>
+                <div class="dash-nav-item"><svg class="icon"><use href="#i-calendar"/></svg> Calendrier</div>
+                <div class="dash-nav-item"><svg class="icon"><use href="#i-wallet"/></svg> Paiements</div>
+                <div class="dash-profile"><span class="profile-avatar">AM</span><span><strong>Aminata M.</strong><small>Compte de démonstration</small></span><span class="profile-more">···</span></div>
+              </aside>
+              <div class="dash-main">
+                <div class="dash-topbar"><div><span class="dash-breadcrumb">Vue d'ensemble</span><span class="dash-demo">APERÇU</span></div><div class="dash-date"><svg class="icon"><use href="#i-calendar"/></svg> Octobre 2026</div></div>
+                <div class="dash-heading"><div><h2>Bonjour, Aminata <span>✦</span></h2><p>Voici ce qui se passe dans votre atelier.</p></div><span class="dash-day">JEUDI 15</span></div>
+                <div class="stats-grid">
+                  <div class="stat-card"><div class="stat-label">Commandes en cours <span class="stat-icon blue"><svg class="icon"><use href="#i-scissors"/></svg></span></div><div class="stat-value">18</div><div class="stat-foot"><span class="stat-up">+3</span> ce mois-ci</div></div>
+                  <div class="stat-card"><div class="stat-label">Commandes terminées <span class="stat-icon green"><svg class="icon"><use href="#i-check"/></svg></span></div><div class="stat-value">12</div><div class="stat-foot"><span class="stat-up">+4</span> ce mois-ci</div></div>
+                  <div class="stat-card"><div class="stat-label">Revenus du mois <span class="stat-icon violet">₣</span></div><div class="stat-value">385 000 <small>FCFA</small></div><div class="stat-foot"><span class="stat-up">+12 %</span> vs. mois dernier</div></div>
+                  <div class="stat-card"><div class="stat-label">Paiements en attente <span class="stat-icon amber"><svg class="icon"><use href="#i-clock"/></svg></span></div><div class="stat-value">95 000 <small>FCFA</small></div><div class="stat-foot">Sur <strong>6 commandes</strong></div></div>
+                </div>
+                <div class="dash-content-grid">
+                  <div class="orders-panel">
+                    <div class="panel-title"><div><h3>Commandes récentes</h3><p>Vos dernières commandes enregistrées</p></div><a href="#tarifs">Voir tout <svg class="icon"><use href="#i-arrow"/></svg></a></div>
+                    <div class="order-table">
+                      <div class="order-row order-header"><span>CLIENT</span><span>VÊTEMENT</span><span>LIVRAISON</span><span>STATUT</span></div>
+                      <div class="order-row"><span class="order-client"><i class="client-dot peach">FK</i> Fatou K.</span><span>Boubou brodé</span><span>18 oct.</span><span><i class="status-dot status-making"></i>En cours</span></div>
+                      <div class="order-row"><span class="order-client"><i class="client-dot blue-lite">MD</i> Mariama D.</span><span>Ensemble bazin</span><span>20 oct.</span><span><i class="status-dot status-fitting"></i>Essayage</span></div>
+                      <div class="order-row"><span class="order-client"><i class="client-dot green-lite">AS</i> Awa S.</span><span>Robe cérémonie</span><span>22 oct.</span><span><i class="status-dot status-ready"></i>Prête</span></div>
+                    </div>
+                    <div class="table-caption">Données fictives · aperçu de démonstration</div>
+                  </div>
+                  <div class="deliveries-panel">
+                    <div class="panel-title"><div><h3>Prochaines livraisons</h3><p>À ne pas oublier</p></div><svg class="icon muted-icon"><use href="#i-calendar"/></svg></div>
+                    <div class="delivery-item"><span class="delivery-date"><b>18</b><small>OCT</small></span><span><strong>Boubou brodé</strong><small>Fatou K.</small></span><span class="delivery-tag">3 j</span></div>
+                    <div class="delivery-item"><span class="delivery-date"><b>20</b><small>OCT</small></span><span><strong>Ensemble bazin</strong><small>Mariama D.</small></span><span class="delivery-tag">5 j</span></div>
+                    <div class="delivery-item"><span class="delivery-date"><b>22</b><small>OCT</small></span><span><strong>Robe cérémonie</strong><small>Awa S.</small></span><span class="delivery-tag">7 j</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="floating-note"><span class="float-check"><svg class="icon"><use href="#i-check"/></svg></span><span><strong>Tout est à sa place.</strong><small>Clients, commandes, paiements.</small></span></div>
+            <span class="dashboard-caption">APERÇU ILLUSTRATIF · DONNÉES FICTIVES</span>
+          </div>
+        </div>
+        <div class="container hero-bottom">
+          <span>UN ATELIER, UN ESPACE POUR TOUT SUIVRE</span>
+          <div><span><svg class="icon"><use href="#i-users"/></svg> Vos clients</span><span><svg class="icon"><use href="#i-ruler"/></svg> Vos mesures</span><span><svg class="icon"><use href="#i-scissors"/></svg> Vos commandes</span><span><svg class="icon"><use href="#i-wallet"/></svg> Vos paiements</span></div>
+        </div>
+      </section>
+
+      <section class="problem-section section-pad" aria-labelledby="problem-title">
+        <div class="container">
+          <div class="section-heading centered narrow">
+            <span class="section-kicker">ON CONNAÎT LE QUOTIDIEN D'UN ATELIER</span>
+            <h2 id="problem-title">Passez moins de temps à gérer.<br><span>Plus de temps à créer.</span></h2>
+            <p>Les commandes notées à la hâte, les mesures égarées, les paiements qu'on oublie… Et si tout était enfin au même endroit ?</p>
+          </div>
+          <div class="problems-grid">
+            <article class="problem-card"><div class="problem-icon icon-blue"><svg class="icon"><use href="#i-calendar"/></svg></div><h3>Les commandes oubliées</h3><p>Retrouvez facilement toutes vos commandes et leurs dates de livraison.</p></article>
+            <article class="problem-card"><div class="problem-icon icon-peach"><svg class="icon"><use href="#i-ruler"/></svg></div><h3>Les mesures égarées</h3><p>Conservez les mensurations de chaque client dans une fiche claire.</p></article>
+            <article class="problem-card"><div class="problem-icon icon-green"><svg class="icon"><use href="#i-wallet"/></svg></div><h3>Les paiements difficiles à suivre</h3><p>Sachez ce que chaque client a payé et ce qu'il reste à encaisser.</p></article>
+            <article class="problem-card"><div class="problem-icon icon-violet"><svg class="icon"><use href="#i-layers"/></svg></div><h3>Les informations dispersées</h3><p>Retrouvez les informations importantes de votre atelier au même endroit.</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="features-section section-pad" id="fonctionnalites" aria-labelledby="features-title">
+        <div class="container">
+          <div class="section-heading centered narrow">
+            <span class="section-kicker">L'ESSENTIEL, SANS LE SUPERFLU</span>
+            <h2 id="features-title">Tout votre atelier <span>dans un seul espace.</span></h2>
+            <p>Les outils essentiels pour organiser votre activité sans compliquer votre travail.</p>
+          </div>
+          <div class="features-grid">
+            <article class="feature-card"><div class="feature-icon"><svg class="icon"><use href="#i-users"/></svg></div><h3>Gestion des clients</h3><p>Enregistrez les noms, les téléphones, les préférences et l'historique de vos clients.</p><a href="#tarifs" aria-label="Découvrir la gestion des clients">En savoir plus <svg class="icon"><use href="#i-arrow"/></svg></a></article>
+            <article class="feature-card"><div class="feature-icon"><svg class="icon"><use href="#i-ruler"/></svg></div><h3>Carnet de mesures</h3><p>Organisez les mensurations par client pour retrouver les mesures nécessaires à chaque confection.</p><a href="#tarifs" aria-label="Découvrir le carnet de mesures">En savoir plus <svg class="icon"><use href="#i-arrow"/></svg></a></article>
+            <article class="feature-card"><div class="feature-icon"><svg class="icon"><use href="#i-scissors"/></svg></div><h3>Gestion des commandes</h3><p>Suivez les vêtements à confectionner, les modèles, les prix, les échéances et l'avancement du travail.</p><a href="#tarifs" aria-label="Découvrir la gestion des commandes">En savoir plus <svg class="icon"><use href="#i-arrow"/></svg></a></article>
+            <article class="feature-card"><div class="feature-icon"><svg class="icon"><use href="#i-wallet"/></svg></div><h3>Suivi des paiements</h3><p>Visualisez les acomptes, les montants déjà encaissés et les soldes restant à payer.</p><a href="#tarifs" aria-label="Découvrir le suivi des paiements">En savoir plus <svg class="icon"><use href="#i-arrow"/></svg></a></article>
+            <article class="feature-card"><div class="feature-icon"><svg class="icon"><use href="#i-calendar"/></svg></div><h3>Calendrier des livraisons</h3><p>Repérez les dates importantes et organisez les essayages et les remises de vêtements.</p><a href="#tarifs" aria-label="Découvrir le calendrier des livraisons">En savoir plus <svg class="icon"><use href="#i-arrow"/></svg></a></article>
+            <article class="feature-card"><div class="feature-icon"><svg class="icon"><use href="#i-chart"/></svg></div><h3>Tableau de bord financier</h3><p>Consultez un aperçu de vos recettes, des montants à encaisser et de l'activité de votre atelier.</p><a href="#tarifs" aria-label="Découvrir le tableau de bord financier">En savoir plus <svg class="icon"><use href="#i-arrow"/></svg></a></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="steps-section section-pad" id="comment-ca-marche" aria-labelledby="steps-title">
+        <div class="container steps-layout">
+          <div class="steps-intro">
+            <span class="section-kicker">UNE PRISE EN MAIN TOUT EN DOUCEUR</span>
+            <h2 id="steps-title">Commencez en <span>quatre étapes simples.</span></h2>
+            <p>Pas besoin de changer votre façon de travailler du jour au lendemain. TailorPro vous aide à mettre de l'ordre, étape par étape.</p>
+            <a href="#tarifs" class="text-link">Voir les offres <svg class="icon"><use href="#i-arrow"/></svg></a>
+          </div>
+          <div class="steps-list">
+            <article class="step-item"><span class="step-number">01</span><div><h3>Créez votre espace</h3><p>Préparez votre espace de travail TailorPro.</p></div><span class="step-icon"><svg class="icon"><use href="#i-sparkle"/></svg></span></article>
+            <article class="step-item"><span class="step-number">02</span><div><h3>Ajoutez vos clients</h3><p>Enregistrez leurs coordonnées et leurs mensurations.</p></div><span class="step-icon"><svg class="icon"><use href="#i-users"/></svg></span></article>
+            <article class="step-item"><span class="step-number">03</span><div><h3>Enregistrez les commandes</h3><p>Ajoutez les vêtements, les prix, les acomptes et les dates prévues.</p></div><span class="step-icon"><svg class="icon"><use href="#i-scissors"/></svg></span></article>
+            <article class="step-item"><span class="step-number">04</span><div><h3>Suivez votre activité</h3><p>Consultez vos commandes, vos livraisons et les paiements à recevoir.</p></div><span class="step-icon"><svg class="icon"><use href="#i-chart"/></svg></span></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="pricing-section section-pad" id="tarifs" aria-labelledby="pricing-title">
+        <div class="container">
+          <div class="section-heading centered narrow">
+            <span class="section-kicker">DES TARIFS CLAIRS, EN FCFA</span>
+            <h2 id="pricing-title">Une formule adaptée <span>à votre atelier.</span></h2>
+            <p>Commencez gratuitement, puis choisissez la formule adaptée au nombre de commandes de votre atelier.</p>
+          </div>
+          <div class="pricing-grid">
+            <article class="price-card">
+              <div class="plan-heading"><span class="plan-icon plan-icon-free"><svg class="icon"><use href="#i-sparkle"/></svg></span><div><h3>Gratuit</h3><p>Pour commencer sereinement</p></div></div>
+              <p class="plan-description">Pour découvrir TailorPro et commencer à organiser votre atelier.</p>
+              <div class="price"><strong>0</strong><span>FCFA <small>/ mois</small></span></div>
+              <div class="plan-limit"><svg class="icon"><use href="#i-check"/></svg><span><strong>5 nouvelles commandes maximum</strong><br>par mois, pas au total.</span></div>
+              <p class="included-label">L'essentiel pour votre atelier</p>
+              <ul class="plan-features">
+                <li>Jusqu'à 5 nouvelles commandes par mois</li><li>Gestion des clients</li><li>Fiches de mensurations</li><li>Informations essentielles des commandes</li><li>Suivi des paiements et des soldes</li><li>Vue simple du tableau de bord</li><li>Utilisation sur téléphone et ordinateur</li>
+              </ul>
+              <a class="button button-outline button-full" href="#cta" data-app-route="/register?plan=free">Commencer gratuitement <svg class="icon"><use href="#i-arrow"/></svg></a>
+              <p class="card-note">Aucune carte bancaire requise.</p>
+            </article>
+            <article class="price-card price-card-featured">
+              <div class="popular-badge"><svg class="icon"><use href="#i-sparkle"/></svg> LE CHOIX DES ATELIERS EN CROISSANCE</div>
+              <div class="plan-heading"><span class="plan-icon plan-icon-pro"><svg class="icon"><use href="#i-scissors"/></svg></span><div><h3>Pro</h3><p>Pour passer à la vitesse supérieure</p></div></div>
+              <p class="plan-description">Pour les ateliers qui veulent gérer davantage de commandes et mieux suivre leur activité.</p>
+              <div class="price"><strong>3 000</strong><span>FCFA <small>/ mois</small></span></div>
+              <div class="plan-limit"><svg class="icon"><use href="#i-check"/></svg><span><strong>Jusqu'à 50 nouvelles commandes</strong><br>par mois.</span></div>
+              <p class="included-label">Tout ce qu'il vous faut, en plus</p>
+              <ul class="plan-features">
+                <li>Toutes les fonctionnalités de l'offre Gratuit</li><li>Jusqu'à 50 nouvelles commandes par mois</li><li>Historique complet des commandes enregistrées</li><li>Gestion détaillée des statuts de fabrication</li><li>Calendrier des essayages et des livraisons</li><li>Historique des paiements</li><li>Rapports mensuels sur les recettes et les soldes</li><li>Gestion des modèles de vêtements</li><li>Fiches clients enrichies et assistance standard</li>
+              </ul>
+              <a class="button button-primary button-full" href="#cta" data-app-route="/register?plan=pro">Choisir Pro <svg class="icon"><use href="#i-arrow"/></svg></a>
+              <p class="card-note">L'inscription sera disponible lors de la mise en service.</p>
+            </article>
+            <article class="price-card">
+              <div class="plan-heading"><span class="plan-icon plan-icon-premium"><svg class="icon"><use href="#i-layers"/></svg></span><div><h3>Premium</h3><p>Pour les ateliers actifs</p></div></div>
+              <p class="plan-description">Pour les ateliers actifs qui ont besoin d'une gestion plus complète de leur activité.</p>
+              <div class="price"><strong>6 000</strong><span>FCFA <small>/ mois</small></span></div>
+              <div class="plan-limit"><svg class="icon"><use href="#i-check"/></svg><span><strong>Commandes mensuelles illimitées</strong><br>dans le respect des conditions d'utilisation.</span></div>
+              <p class="included-label">Une gestion plus complète</p>
+              <ul class="plan-features">
+                <li>Toutes les fonctionnalités de l'offre Pro</li><li>Nombre illimité de nouvelles commandes</li><li>Rapports financiers avancés</li><li>Historique détaillé de l'activité</li><li>Gestion avancée des modèles et des commandes</li><li>Suivi prioritaire des demandes d'assistance</li><li>Export des données lorsqu'il sera disponible</li><li>Fonctionnalités avancées de suivi de l'atelier</li>
+              </ul>
+              <a class="button button-outline button-full" href="#cta" data-app-route="/register?plan=premium">Choisir Premium <svg class="icon"><use href="#i-arrow"/></svg></a>
+              <p class="card-note">Les fonctions à venir seront signalées clairement.</p>
+            </article>
+          </div>
+          <p class="pricing-footnote"><svg class="icon"><use href="#i-book"/></svg> La limite mensuelle porte sur les nouvelles commandes créées durant le mois. L'historique des commandes enregistrées est conservé selon l'offre prévue. Les abonnements et paiements ne sont pas encore activés.</p>
+        </div>
+      </section>
+
+      <section class="africa-section section-pad" aria-labelledby="africa-title">
+        <div class="container africa-layout">
+          <div class="atelier-illustration" role="img" aria-label="Illustration décorative d'un atelier de couture : mannequin, tissu imprimé et accessoires de confection">
+            <div class="atelier-frame">
+              <div class="atelier-sun"></div><div class="atelier-window"><span></span><span></span><span></span><span></span></div>
+              <div class="fabric-roll roll-one"></div><div class="fabric-roll roll-two"></div>
+              <svg class="mannequin-art" viewBox="0 0 300 410" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M132 34h36l8 41 40 23-34 40 30 115H88l30-115-34-40 40-23z" fill="#fff" stroke="#203a58" stroke-width="5" stroke-linejoin="round"/>
+                <path d="M132 34v-20h36v20M126 82l24 27 24-27M150 109v144" fill="none" stroke="#203a58" stroke-width="4" stroke-linecap="round"/>
+                <path d="m88 253-21 123h166l-21-123" fill="#e9aa77" stroke="#203a58" stroke-width="5" stroke-linejoin="round"/>
+                <path d="m87 279 127 0m-133 29h138m-144 30h151m-157 30h163" stroke="#a6533d" stroke-width="5"/>
+                <path d="m113 253 37 123m39-123-39 123" stroke="#fff2dd" stroke-width="4"/>
+                <circle cx="150" cy="173" r="7" fill="#2563eb"/><circle cx="150" cy="194" r="7" fill="#2563eb"/>
+              </svg>
+              <div class="atelier-table"><div class="table-cloth"></div><div class="thread-spool"></div><div class="measuring-tape"></div></div>
+              <div class="atelier-plant"><i></i><i></i><i></i><span></span></div>
+              <div class="atelier-label"><span class="label-mark"><svg class="icon"><use href="#i-needle"/></svg></span><span><b>L'art du fait main.</b><small>La simplicité au quotidien.</small></span></div>
+              <div class="fabric-swatch"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+            </div>
+            <span class="atelier-caption">UNE ILLUSTRATION DE L'UNIVERS DE L'ATELIER</span>
+          </div>
+          <div class="africa-copy">
+            <span class="section-kicker">FAIT POUR VOTRE QUOTIDIEN</span>
+            <h2 id="africa-title">Pensé pour <span>votre façon de travailler.</span></h2>
+            <p class="africa-lead">Que vous confectionniez des boubous, des bazins, des tenues traditionnelles, des robes ou des vêtements modernes, TailorPro vous aide à garder le contrôle sur vos commandes et votre organisation.</p>
+            <div class="africa-benefits">
+              <div class="benefit-row"><span class="benefit-icon"><svg class="icon"><use href="#i-wallet"/></svg></span><div><h3>Une devise adaptée</h3><p>Les montants s'affichent en FCFA, pour des repères qui vous parlent.</p></div></div>
+              <div class="benefit-row"><span class="benefit-icon"><svg class="icon"><use href="#i-sparkle"/></svg></span><div><h3>Une utilisation simple</h3><p>Une interface claire, même si les logiciels ne font pas encore partie de vos habitudes.</p></div></div>
+              <div class="benefit-row"><span class="benefit-icon"><svg class="icon"><use href="#i-phone"/></svg></span><div><h3>Une liberté de travail</h3><p>Un espace pensé pour être consulté sur téléphone ou ordinateur.</p></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="cta-section" id="cta">
+        <div class="cta-pattern" aria-hidden="true"></div>
+        <div class="container cta-content">
+          <span class="cta-icon"><svg class="icon"><use href="#i-needle"/></svg></span>
+          <span class="cta-kicker">VOTRE SAVOIR-FAIRE, NOTRE INSPIRATION</span>
+          <h2>Votre atelier mérite<br>une meilleure organisation.</h2>
+          <p>Commencez gratuitement et découvrez une façon plus simple de gérer vos clients, vos commandes et vos paiements.</p>
+          <a class="button button-white button-large" href="#cta" data-app-route="/register?plan=free">Découvrir TailorPro gratuitement <svg class="icon"><use href="#i-arrow"/></svg></a>
+          <span class="cta-note"><svg class="icon"><use href="#i-check"/></svg> Offre gratuite prévue : jusqu'à 5 nouvelles commandes par mois.</span>
+          <p class="interaction-message" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <section class="faq-section section-pad" id="faq" aria-labelledby="faq-title">
+        <div class="container faq-layout">
+          <div class="faq-intro">
+            <span class="section-kicker">VOUS AVEZ DES QUESTIONS ?</span>
+            <h2 id="faq-title">On vous répond <span>sans détour.</span></h2>
+            <p>Tout ce qu'il faut savoir sur TailorPro et les offres prévues.</p>
+            <div class="faq-help"><span class="help-icon"><svg class="icon"><use href="#i-book"/></svg></span><span><strong>Vous ne trouvez pas votre réponse ?</strong><small>Notre adresse de contact sera ajoutée ici prochainement.</small></span></div>
+          </div>
+          <div class="faq-list">
+            <details class="faq-item"><summary>TailorPro est-il adapté aux petits ateliers ?<span class="faq-plus"></span></summary><p>Oui. TailorPro est conçu pour aider les tailleurs indépendants et les petits ateliers à organiser leurs clients, leurs mesures et leurs commandes.</p></details>
+            <details class="faq-item"><summary>Puis-je utiliser TailorPro sur mon téléphone ?<span class="faq-plus"></span></summary><p>L'interface est conçue pour fonctionner sur téléphone, tablette et ordinateur.</p></details>
+            <details class="faq-item"><summary>L'offre gratuite est-elle limitée ?<span class="faq-plus"></span></summary><p>Oui. L'offre gratuite prévue permet de créer jusqu'à 5 nouvelles commandes par mois.</p></details>
+            <details class="faq-item"><summary>Puis-je conserver mes anciennes commandes ?<span class="faq-plus"></span></summary><p>La règle tarifaire prévue est de conserver l'historique des commandes enregistrées. La limite gratuite concerne les nouvelles commandes créées chaque mois.</p></details>
+            <details class="faq-item"><summary>Puis-je changer d'offre ?<span class="faq-plus"></span></summary><p>Les offres sont prévues pour permettre aux utilisateurs de passer à une formule supérieure lorsque leur atelier se développe. Le changement réel d'offre sera mis en place dans une étape ultérieure.</p></details>
+            <details class="faq-item"><summary>Dois-je payer pour commencer ?<span class="faq-plus"></span></summary><p>Non. L'offre Gratuit est prévue à 0 FCFA par mois. L'inscription n'est pas encore disponible.</p></details>
+            <details class="faq-item"><summary>Mes données seront-elles protégées ?<span class="faq-plus"></span></summary><p>La protection des données sera mise en place et vérifiée lors des étapes d'implémentation et de sécurité. Cette page ne dispose pas encore de système backend de protection des données.</p></details>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-main">
+        <div class="footer-brand-column">
+          <a class="brand footer-brand" href="#accueil" aria-label="TailorPro, retour à l'accueil"><span class="brand-mark"><svg class="icon"><use href="#i-needle"/></svg></span><span>TAILOR<span class="brand-accent">PRO</span></span></a>
+          <p>Gérez votre atelier.<br>Simplifiez vos commandes.</p>
+          <span class="footer-locale"><span></span> Un outil pensé pour les ateliers francophones</span>
+        </div>
+        <div class="footer-links-column"><h3>Explorer</h3><a href="#accueil">Accueil</a><a href="#fonctionnalites">Fonctionnalités</a><a href="#tarifs">Tarifs</a><a href="#faq">FAQ</a></div>
+        <div class="footer-links-column"><h3>Informations</h3><a class="js-not-live-link" href="#cta">Politique de confidentialité <span>à venir</span></a><a class="js-not-live-link" href="#cta">Conditions d'utilisation <span>à venir</span></a><span class="footer-placeholder">Contact : adresse à compléter</span></div>
+        <div class="footer-links-column"><h3>Suivez l'aventure</h3><span class="footer-placeholder">Réseaux sociaux à compléter</span><div class="social-placeholders" aria-label="Emplacements de réseaux sociaux à compléter"><span>IG</span><span>FB</span><span>in</span></div></div>
+      </div>
+      <div class="container footer-bottom"><span>© <span id="current-year"></span> TAILORPRO. Tous droits réservés.</span><span>Conçu avec soin pour les mains qui créent.</span></div>
+    </footer>
+  </body>
+</html>

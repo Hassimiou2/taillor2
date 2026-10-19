@@ -1,0 +1,82 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Installer les dépendances TailorPro",
+			"type": "shell",
+			"command": "npm.cmd install",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Compiler TailorPro",
+			"type": "shell",
+			"command": "npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Lancer TailorPro en développement",
+			"type": "shell",
+			"command": "npm.cmd run dev -- --host 127.0.0.1",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Vérifier TailorPro configuré",
+			"type": "shell",
+			"command": "npm.cmd run dev -- --host 127.0.0.1 --port 5174 --strictPort",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Build final TailorPro",
+			"type": "shell",
+			"command": "npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Vérifier CLI Supabase",
+			"type": "shell",
+			"command": "supabase --version",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Vérifier session Supabase",
+			"type": "shell",
+			"command": "npx.cmd --yes supabase projects list",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Vérifier accès projet Supabase",
+			"type": "shell",
+			"command": "npx.cmd --yes supabase projects list",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Lister projets Supabase",
+			"type": "shell",
+			"command": "npx.cmd --yes supabase projects list",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Contrôler l’accès Supabase",
+			"type": "shell",
+			"command": "npx.cmd --yes supabase projects list --debug; Write-Output ('EXIT_CODE=' + $LASTEXITCODE)",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Lier projet TailorPro Supabase",
+			"type": "shell",
+			"command": "npx.cmd --yes supabase link --project-ref stfqugqurqiigiviuwbq",
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}
