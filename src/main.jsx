@@ -23,7 +23,8 @@ const planLabels = { free: "Gratuit", pro: "Pro", premium: "Premium" };
 const paymentLabels = { cash: "Espèces", mobile_money: "Mobile Money", bank_transfer: "Virement", other: "Autre" };
 const navItems = [
   ["dashboard", "Vue d'ensemble", "⌂"],
-  ["clients", "Clients & mesures", "♧"],
+  ["clients", "Clients", "♧"],
+  ["measurements", "Mesures", "▱"],
   ["orders", "Commandes", "✂"],
   ["models", "Modèles", "◇"],
   ["calendar", "Calendrier", "▦"],
@@ -393,6 +394,8 @@ function WorkspacePage({ page, data, refresh, user }) {
 
   const visibleClients = useMemo(() => data.clients.filter((client) => !client.archived_at &&
     `${client.full_name} ${client.phone}`.toLocaleLowerCase("fr").includes(query.toLocaleLowerCase("fr"))), [data.clients, query]);
+  const visibleMeasurementClients = useMemo(() => data.clients.filter((client) => !client.archived_at &&
+    `${client.full_name} ${client.phone}`.toLocaleLowerCase("fr").includes(query.toLocaleLowerCase("fr"))), [data.clients, query]);
   const visibleOrders = useMemo(() => data.orders.filter((order) => !order.archived_at &&
     (filter === "all" || order.status === filter) &&
     `${order.reference} ${order.clients?.full_name || ""} ${order.order_items?.map((item) => item.garment_name).join(" ") || ""}`.toLocaleLowerCase("fr").includes(query.toLocaleLowerCase("fr"))), [data.orders, filter, query]);
@@ -400,7 +403,8 @@ function WorkspacePage({ page, data, refresh, user }) {
 
   const renderContent = () => {
     switch (page) {
-      case "clients": return <ClientsPage data={data} clients={visibleClients} query={query} setQuery={setQuery} onCreate={() => setModal({ type: "client" })} onEdit={(item) => setModal({ type: "client", item })} onMeasure={(item) => setModal({ type: "measurements", item })} onArchive={(item) => window.confirm(`Archiver la fiche de ${item.full_name} ? Ses commandes et son historique seront conservés.`) && runAction(() => supabase.from("clients").update({ archived_at: new Date().toISOString() }).eq("id", item.id).eq("workshop_id", data.workshop.id).throwOnError(), "Fiche client archivée.")} />;
+      case "clients": return <ClientsPage data={data} clients={visibleClients} query={query} setQuery={setQuery} onCreate={() => setModal({ type: "client" })} onEdit={(item) => setModal({ type: "client", item })} onArchive={(item) => window.confirm(`Archiver la fiche de ${item.full_name} ? Ses commandes et son historique seront conservés.`) && runAction(() => supabase.from("clients").update({ archived_at: new Date().toISOString() }).eq("id", item.id).eq("workshop_id", data.workshop.id).throwOnError(), "Fiche client archivée.")} />;
+      case "measurements": return <MeasurementsPage data={data} clients={visibleMeasurementClients} query={query} setQuery={setQuery} onOpen={(item) => setModal({ type: "measurements", item })} onAddClient={() => navigate("/app/clients")} />;
       case "orders": return <OrdersPage data={data} orders={visibleOrders} query={query} setQuery={setQuery} filter={filter} setFilter={setFilter} onCreate={() => setModal({ type: "order" })} onEdit={(item) => setModal({ type: "order-edit", item })} onPayment={(item) => setModal({ type: "payment", item })} onStatus={(order, status) => runAction(() => supabase.from("orders").update({ status }).eq("id", order.id).eq("workshop_id", data.workshop.id).throwOnError(), "Statut de la commande mis à jour.")} onArchive={(item) => window.confirm(`Archiver la commande #${item.reference} ? L’historique financier sera conservé.`) && runAction(() => supabase.from("orders").update({ archived_at: new Date().toISOString() }).eq("id", item.id).eq("workshop_id", data.workshop.id).throwOnError(), "Commande archivée.")} />;
       case "models": return <ModelsPage models={activeModels} onCreate={() => setModal({ type: "model" })} onEdit={(item) => setModal({ type: "model", item })} onArchive={(item) => window.confirm(`Archiver le modèle « ${item.name} » ?`) && runAction(() => supabase.from("garment_models").update({ archived_at: new Date().toISOString() }).eq("id", item.id).eq("workshop_id", data.workshop.id).throwOnError(), "Modèle archivé.")} />;
       case "calendar": return <CalendarPage orders={data.orders.filter((order) => !order.archived_at)} />;
@@ -603,15 +607,25 @@ function PaymentForm({ order, payments }) {
   </>;
 }
 
-function ClientsPage({ data, clients, query, setQuery, onCreate, onEdit, onMeasure, onArchive }) {
+function ClientsPage({ data, clients, query, setQuery, onCreate, onEdit, onArchive }) {
   return <>
-    <PageHeading eyebrow="VOTRE CARNET D’ADRESSES" title="Clients" description="Retrouvez les coordonnées, commandes et mensurations de votre clientèle." action={<button className="tp-button primary" onClick={onCreate}>+ Ajouter un client</button>} />
+    <PageHeading eyebrow="VOTRE CARNET D’ADRESSES" title="Clients" description="Retrouvez les coordonnées et l’historique de votre clientèle." action={<button className="tp-button primary" onClick={onCreate}>+ Ajouter un client</button>} />
     <div className="toolbar"><label className="search-field"><span>⌕</span><input aria-label="Rechercher un client" placeholder="Rechercher un nom ou un téléphone" value={query} onChange={(event) => setQuery(event.target.value)} /></label><span className="result-count">{clients.length} client{clients.length !== 1 ? "s" : ""}</span></div>
-    {clients.length ? <div className="data-table-wrap"><table className="data-table"><thead><tr><th>CLIENT</th><th>TÉLÉPHONE</th><th>COMMANDES</th><th>MESURES</th><th>FICHE CRÉÉE</th><th>ACTIONS</th></tr></thead><tbody>{clients.map((client) => {
+    {clients.length ? <div className="data-table-wrap"><table className="data-table"><thead><tr><th>CLIENT</th><th>TÉLÉPHONE</th><th>COMMANDES</th><th>FICHE CRÉÉE</th><th>ACTIONS</th></tr></thead><tbody>{clients.map((client) => {
       const orders = data.orders.filter((order) => order.client_id === client.id);
-      const measures = data.measurements.filter((measurement) => measurement.client_id === client.id);
-      return <tr key={client.id}><td><strong>{client.full_name}</strong>{client.address && <small className="table-sub">{client.address}</small>}</td><td>{client.phone}</td><td>{orders.length}</td><td>{measures.length}</td><td>{dateFormat(client.created_at)}</td><td><div className="row-actions"><button onClick={() => onMeasure(client)}>Mesures</button><button onClick={() => onEdit(client)}>Modifier</button><button className="danger-text" onClick={() => onArchive(client)}>Archiver</button></div></td></tr>;
-    })}</tbody></table></div> : <EmptyState title="Aucun client pour le moment" text={query ? "Aucun résultat ne correspond à votre recherche." : "Ajoutez votre premier client pour conserver ses coordonnées et ses mesures au même endroit."} />}
+      return <tr key={client.id}><td><strong>{client.full_name}</strong>{client.address && <small className="table-sub">{client.address}</small>}</td><td>{client.phone}</td><td>{orders.length}</td><td>{dateFormat(client.created_at)}</td><td><div className="row-actions"><button onClick={() => onEdit(client)}>Modifier</button><button className="danger-text" onClick={() => onArchive(client)}>Archiver</button></div></td></tr>;
+    })}</tbody></table></div> : <EmptyState title="Aucun client pour le moment" text={query ? "Aucun résultat ne correspond à votre recherche." : "Ajoutez votre premier client pour conserver ses coordonnées et son historique."} />}
+  </>;
+}
+
+function MeasurementsPage({ data, clients, query, setQuery, onOpen, onAddClient }) {
+  return <>
+    <PageHeading eyebrow="CARNET DE MENSURATIONS" title="Mesures" description="Consultez et mettez à jour les fiches de mesures, séparément du carnet de clients." action={<button className="tp-button secondary" onClick={onAddClient}>Voir les clients</button>} />
+    <div className="toolbar"><label className="search-field"><span>⌕</span><input aria-label="Rechercher des mesures par client" placeholder="Rechercher un nom ou un téléphone" value={query} onChange={(event) => setQuery(event.target.value)} /></label><span className="result-count">{clients.length} client{clients.length !== 1 ? "s" : ""}</span></div>
+    {clients.length ? <div className="data-table-wrap"><table className="data-table"><thead><tr><th>CLIENT</th><th>TÉLÉPHONE</th><th>FICHES DE MESURES</th><th>DERNIÈRE MISE À JOUR</th><th>ACTIONS</th></tr></thead><tbody>{clients.map((client) => {
+      const measurements = data.measurements.filter((measurement) => measurement.client_id === client.id);
+      return <tr key={client.id}><td><strong>{client.full_name}</strong></td><td>{client.phone}</td><td>{measurements.length}</td><td>{measurements[0] ? dateFormat(measurements[0].measured_on) : "Aucune fiche"}</td><td><div className="row-actions"><button onClick={() => onOpen(client)}>Gérer les mesures</button></div></td></tr>;
+    })}</tbody></table></div> : <EmptyState title={query ? "Aucun client trouvé" : "Aucun client à mesurer"} text={query ? "Aucun résultat ne correspond à votre recherche." : "Ajoutez d’abord un client, puis créez sa première fiche de mesures."} action={!query && <button className="tp-button primary" onClick={onAddClient}>Ajouter un client</button>} />}
   </>;
 }
 
@@ -743,7 +757,7 @@ function ReportsPage({ data }) {
 function SubscriptionPage({ data, onChoose }) {
   const monthOrders = data.orders.filter((order) => order.created_at.slice(0, 7) === monthKey).length;
   const plans = [
-    { key: "free", name: "Gratuit", price: "0", limit: "5 nouvelles commandes / mois", features: ["Clients et mensurations", "Commandes et paiements", "Tableau de bord essentiel"] },
+    { key: "free", name: "Gratuit", price: "0", limit: "10 nouvelles commandes / mois", features: ["Gestion des clients", "Carnet de mesures", "Commandes et paiements", "Tableau de bord essentiel"] },
     { key: "pro", name: "Pro", price: "3 000", limit: "Jusqu’à 50 nouvelles commandes / mois", features: ["Tout l’offre Gratuit", "Calendrier et statuts détaillés", "Modèles et rapports mensuels"] },
     { key: "premium", name: "Premium", price: "6 000", limit: "Commandes mensuelles illimitées*", features: ["Tout l’offre Pro", "Rapports avancés", "Assistance prioritaire prévue"] },
   ];

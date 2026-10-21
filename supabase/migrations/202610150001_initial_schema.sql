@@ -260,7 +260,7 @@ declare
 begin
   perform 1 from public.workshops where id = new.workshop_id for update;
   select plan into selected_plan from public.workshops where id = new.workshop_id;
-  plan_limit := case selected_plan when 'free' then 5 when 'pro' then 50 else null end;
+  plan_limit := case selected_plan when 'free' then 10 when 'pro' then 50 else null end;
   if plan_limit is not null then
     select count(*)::integer into monthly_count
       from public.orders
