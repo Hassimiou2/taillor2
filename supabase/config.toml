@@ -1,0 +1,10 @@
+project_id = "stfqugqurqiigiviuwbq"
+
+[functions.saspay-checkout]
+verify_jwt = true
+
+[functions.saspay-confirm]
+verify_jwt = true
+
+[functions.saspay-webhook]
+verify_jwt = false

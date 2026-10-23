@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { createClient } from "@supabase/supabase-js";
 import "./app.css";
@@ -119,6 +119,8 @@ function App() {
       setLoadingData(true);
       setDataError("");
       try {
+        const { error: expiryError } = await supabase.rpc("expire_my_subscription");
+        if (expiryError) throw expiryError;
         const [workshopResult, profileResult] = await Promise.all([
           supabase.from("workshops").select("*").single(),
           supabase.from("profiles").select("*").single(),
@@ -156,7 +158,7 @@ function App() {
     return () => { active = false; };
   }, [session, refreshKey]);
 
-  const refresh = () => setRefreshKey((value) => value + 1);
+  const refresh = useCallback(() => setRefreshKey((value) => value + 1), []);
 
   if (!supabase) return <SetupPage />;
   if (!authReady) return <FullScreenMessage title="Chargement de TailorPro…" />;
@@ -377,6 +379,22 @@ function WorkspacePage({ page, data, refresh, user }) {
   const [filter, setFilter] = useState("all");
   const plan = data.workshop.plan;
 
+  async function startSubscription(nextPlan) {
+    setBusy(true);
+    setNotice("");
+    try {
+      const { data: checkout, error } = await supabase.functions.invoke("saspay-checkout", {
+        body: { plan: nextPlan },
+      });
+      if (error) throw error;
+      if (!checkout?.checkout_url) throw new Error(checkout?.error || "SasPay n’a pas renvoyé de lien de paiement.");
+      window.location.assign(checkout.checkout_url);
+    } catch (error) {
+      setNotice(error.message || "Impossible de démarrer le paiement. Réessayez.");
+      setBusy(false);
+    }
+  }
+
   async function runAction(action, successText) {
     setBusy(true);
     setNotice("");
@@ -410,7 +428,7 @@ function WorkspacePage({ page, data, refresh, user }) {
       case "calendar": return <CalendarPage orders={data.orders.filter((order) => !order.archived_at)} />;
       case "payments": return <PaymentsPage payments={data.payments} orders={data.orders} onCreate={(item) => setModal({ type: "payment", item })} />;
       case "reports": return <ReportsPage data={data} />;
-      case "subscription": return <SubscriptionPage data={data} onChoose={() => setNotice("Le paiement et le changement réel d’offre seront activés après l’intégration d’un prestataire.")} />;
+      case "subscription": return <SubscriptionPage data={data} busy={busy} onChoose={startSubscription} refresh={refresh} />;
       case "settings": return <SettingsPage data={data} user={user} onSave={(values) => runAction(async () => {
         const { error } = await supabase.rpc("update_my_workshop_settings", values);
         if (error) throw error;
@@ -754,18 +772,84 @@ function ReportsPage({ data }) {
   </>;
 }
 
-function SubscriptionPage({ data, onChoose }) {
+function SubscriptionPage({ data, busy, onChoose, refresh }) {
+  const [paymentMessage, setPaymentMessage] = useState("");
+  const [checkingPayment, setCheckingPayment] = useState(false);
+  const [retryVerification, setRetryVerification] = useState(0);
+  const billingSessionId = new URLSearchParams(window.location.search).get("billing_session");
   const monthOrders = data.orders.filter((order) => order.created_at.slice(0, 7) === monthKey).length;
+  const currentSubscription = data.subscription;
+  const subscriptionStatus = currentSubscription?.status === "expired" ? "Expiré" :
+    currentSubscription?.status === "cancelled" ? "Terminé" :
+      data.workshop.plan === "free" ? "Sans frais" : "Actif";
+
+  useEffect(() => {
+    if (!billingSessionId) return undefined;
+    let active = true;
+    setCheckingPayment(true);
+    setPaymentMessage("Vérification du paiement auprès de SasPay…");
+    supabase.functions.invoke("saspay-confirm", {
+      body: { billing_session_id: billingSessionId },
+    }).then(({ data: result, error }) => {
+      if (!active) return;
+      if (error) throw error;
+      if (result?.error) throw new Error(result.error);
+      if (result?.status === "paid") {
+        setPaymentMessage("Paiement confirmé. Votre formule est activée.");
+        refresh();
+      } else if (result?.status === "expired") {
+        setPaymentMessage("Cette session de paiement a expiré. Vous pouvez en démarrer une nouvelle.");
+      } else if (result?.status === "failed") {
+        setPaymentMessage("Le paiement a échoué. Vous pouvez recommencer avec une nouvelle session.");
+      } else {
+        setPaymentMessage("Le paiement est encore en attente de confirmation. Vous pouvez vérifier à nouveau dans un instant.");
+      }
+    }).catch((error) => {
+      if (active) setPaymentMessage(error.message || "La vérification a échoué. Réessayez dans un instant.");
+    }).finally(() => {
+      if (active) setCheckingPayment(false);
+    });
+    return () => { active = false; };
+  }, [billingSessionId, refresh, retryVerification]);
+
   const plans = [
-    { key: "free", name: "Gratuit", price: "0", limit: "10 nouvelles commandes / mois", features: ["Gestion des clients", "Carnet de mesures", "Commandes et paiements", "Tableau de bord essentiel"] },
-    { key: "pro", name: "Pro", price: "3 000", limit: "Jusqu’à 50 nouvelles commandes / mois", features: ["Tout l’offre Gratuit", "Calendrier et statuts détaillés", "Modèles et rapports mensuels"] },
-    { key: "premium", name: "Premium", price: "6 000", limit: "Commandes mensuelles illimitées*", features: ["Tout l’offre Pro", "Rapports avancés", "Assistance prioritaire prévue"] },
+    { key: "free", name: "Gratuit", price: "0", description: "Pour découvrir TailorPro et organiser les premiers travaux de votre atelier.", limit: "10 nouvelles commandes par mois", features: ["Gestion des clients", "Carnet de mesures", "Commandes et suivi des paiements", "Tableau de bord essentiel", "Utilisation sur téléphone et ordinateur"] },
+    { key: "pro", name: "Pro", price: "3 000", description: "Pour les ateliers qui souhaitent suivre davantage de commandes et leur activité.", limit: "Jusqu’à 50 nouvelles commandes par mois", features: ["Toutes les fonctionnalités Gratuit", "Calendrier des essayages et livraisons", "Statuts détaillés des commandes", "Gestion des modèles", "Rapports mensuels"] },
+    { key: "premium", name: "Premium", price: "6 000", description: "Pour les ateliers actifs qui ont besoin d’un suivi plus complet.", limit: "Commandes mensuelles illimitées*", features: ["Toutes les fonctionnalités Pro", "Rapports financiers avancés", "Historique détaillé de l’activité", "Suivi prioritaire des demandes d’assistance", "Export des données prévu ultérieurement"] },
   ];
   return <>
-    <PageHeading eyebrow="VOTRE FORMULE" title="Abonnement" description="Consultez votre offre et les limites prévues, sans paiement activé." />
-    <div className="current-plan"><div><span className="app-eyebrow">FORMULE ACTUELLE</span><h2>{planLabels[data.workshop.plan] || "Gratuit"}</h2><p>{monthOrders} nouvelles commande{monthOrders !== 1 ? "s" : ""} créée{monthOrders !== 1 ? "s" : ""} ce mois-ci.</p></div><span className="plan-current-badge">En cours</span></div>
-    <div className="subscription-grid">{plans.map((plan) => <article className={`subscription-card ${data.workshop.plan === plan.key ? "selected" : ""}`} key={plan.key}><span className="app-eyebrow">{data.workshop.plan === plan.key ? "VOTRE OFFRE" : "FORMULE"}</span><h2>{plan.name}</h2><p className="subscription-price">{plan.price}<small> FCFA / mois</small></p><strong className="subscription-limit">{plan.limit}</strong><ul>{plan.features.map((feature) => <li key={feature}>{feature}</li>)}</ul><button className={`tp-button ${data.workshop.plan === plan.key ? "secondary" : "primary"} full`} onClick={onChoose}>{data.workshop.plan === plan.key ? "Offre actuelle" : "Bientôt disponible"}</button></article>)}</div>
-    <p className="form-hint">* Dans le respect des conditions d’utilisation. Aucun changement d’offre ni paiement n’est encore activé. Les quotas sont vérifiés par la base lors de la création et les commandes historiques ne sont pas supprimées.</p>
+    <PageHeading eyebrow="VOTRE FORMULE" title="Abonnement" description="Choisissez une formule et réglez votre mois via la page sécurisée SasPay." />
+    <section className="current-plan" aria-label="Votre abonnement actuel">
+      <div>
+        <span className="app-eyebrow">FORMULE ACTUELLE</span>
+        <h2>{planLabels[data.workshop.plan] || "Gratuit"}</h2>
+        <p>{monthOrders} nouvelle{monthOrders !== 1 ? "s" : ""} commande{monthOrders !== 1 ? "s" : ""} créée{monthOrders !== 1 ? "s" : ""} ce mois-ci.</p>
+        {data.workshop.plan !== "free" && currentSubscription?.ends_at &&
+          <p className="subscription-renewal">Fin de la période : {dateFormat(currentSubscription.ends_at)}. Aucun renouvellement automatique.</p>}
+      </div>
+      <span className={`plan-current-badge ${currentSubscription?.status === "expired" || currentSubscription?.status === "cancelled" ? "inactive" : ""}`} aria-label={`Statut : ${subscriptionStatus}`}>{subscriptionStatus}</span>
+    </section>
+    {paymentMessage && <div className="info-banner" role="status" aria-live="polite">
+      <span>{paymentMessage}</span>
+      {billingSessionId && <button className="text-button" type="button" disabled={checkingPayment} onClick={() => setRetryVerification((value) => value + 1)}>{checkingPayment ? "Vérification…" : "Vérifier à nouveau"}</button>}
+    </div>}
+    <div className="subscription-grid">
+      {plans.map((plan) => {
+        const isCurrent = data.workshop.plan === plan.key;
+        return <article className={`subscription-card ${isCurrent ? "selected" : ""}`} key={plan.key} aria-label={`Formule ${plan.name}${isCurrent ? ", formule actuelle" : ""}`}>
+          <span className="app-eyebrow">{isCurrent ? "VOTRE OFFRE" : "FORMULE"}</span>
+          <h2>{plan.name}</h2>
+          <p className="subscription-description">{plan.description}</p>
+          <p className="subscription-price">{plan.price}<small> FCFA / mois</small></p>
+          <strong className="subscription-limit">{plan.limit}</strong>
+          <ul>{plan.features.map((feature) => <li key={feature}>{feature}</li>)}</ul>
+          <button className={`tp-button ${isCurrent ? "secondary" : "primary"} full`} disabled={busy || isCurrent || plan.key === "free"} onClick={() => onChoose(plan.key)}>
+            {isCurrent ? "Offre actuelle" : busy ? "Préparation…" : plan.key === "free" ? "Offre incluse" : `Choisir ${plan.name}`}
+          </button>
+        </article>;
+      })}
+    </div>
+    <p className="form-hint">La limite concerne les nouvelles commandes créées pendant le mois ; les commandes historiques sont conservées. *Les commandes illimitées restent soumises aux conditions d’utilisation. Le paiement est mensuel, sans renouvellement automatique. La formule est activée uniquement après confirmation du paiement auprès de SasPay.</p>
   </>;
 }
 
