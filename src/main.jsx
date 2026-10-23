@@ -417,6 +417,11 @@ function WorkspacePage({ page, data, refresh, user }) {
         body: { plan: nextPlan },
       });
       if (error) throw error;
+      if (checkout?.status === "paid") {
+        setNotice("Votre paiement est déjà confirmé et votre formule est activée.");
+        refresh();
+        return;
+      }
       if (!checkout?.checkout_url) throw new Error(checkout?.error || "SasPay n’a pas renvoyé de lien de paiement.");
       window.location.assign(checkout.checkout_url);
     } catch (error) {

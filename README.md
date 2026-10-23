@@ -19,6 +19,6 @@ Avant le déploiement :
 5. Copier le secret de signature affiché lors de la création du webhook dans Supabase Edge Function Secrets sous `SASPAY_WEBHOOK_SECRET`. Le secret n’est affiché qu’une seule fois par SasPay.
 6. Tester un paiement de chaque formule avec un moyen de paiement de test SasPay. La formule reste inchangée tant que SasPay ne confirme pas le paiement.
 
-Les offres Pro et Premium sont facturées manuellement chaque mois. Aucun renouvellement automatique n’est configuré. Une formule payante expire après un mois et revient à Gratuit au prochain chargement de l’espace.
+Les offres Pro et Premium sont facturées manuellement chaque mois. Aucun renouvellement automatique n’est configuré. Une formule payante expire après un mois et revient à Gratuit au prochain chargement de l’espace. Si une session SasPay est annulée ou échoue, sélectionnez de nouveau la formule : le statut est vérifié auprès de SasPay et une nouvelle session est créée au lieu de réutiliser le lien annulé.
 
 La clé de production ne doit être ajoutée qu’après validation des tests, du compte marchand et des paramètres de production SasPay.

@@ -63,17 +63,56 @@ Deno.serve(async (request) => {
 
   const { data: pendingBilling, error: pendingError } = await admin
     .from("billing_sessions")
-    .select("plan, checkout_url")
+    .select("id, plan, checkout_url, provider_checkout_id")
     .eq("workshop_id", workshop.id)
     .eq("status", "pending")
     .maybeSingle();
   if (pendingError) return jsonResponse({ error: "Impossible de vérifier les paiements en cours." }, 500);
   if (pendingBilling) {
-    if (pendingBilling.plan !== plan) {
-      return jsonResponse({ error: "Un paiement est déjà en cours. Terminez ou abandonnez cette session avant de choisir une autre formule." }, 409);
+    if (!pendingBilling.provider_checkout_id) {
+      return jsonResponse({ error: "Une session de paiement est encore en préparation. Réessayez dans quelques instants." }, 409);
     }
-    if (pendingBilling.checkout_url) return jsonResponse({ checkout_url: pendingBilling.checkout_url });
-    return jsonResponse({ error: "Une session de paiement est en préparation. Réessayez dans quelques instants." }, 409);
+
+    let statusResponse: Response;
+    try {
+      statusResponse = await fetch(
+        `https://api.saspay.me/api/v1/checkout-sessions/${pendingBilling.provider_checkout_id}/status/`,
+        { headers: { Authorization: `****** } },
+      );
+    } catch {
+      return jsonResponse({ error: "Impossible de vérifier la session de paiement auprès de SasPay. Réessayez." }, 502);
+    }
+
+    const statusPayload = await statusResponse.json().catch(() => null);
+    if (!statusResponse.ok || statusPayload?.success !== true) {
+      return jsonResponse({ error: "SasPay n’a pas pu vérifier la session de paiement en cours." }, 502);
+    }
+
+    const pendingStatus = String(statusPayload?.data?.transaction_status ?? statusPayload?.data?.status ?? "").toUpperCase();
+    if (pendingStatus === "SUCCESS" || pendingStatus === "PAID") {
+      const { data: activationResult, error: activationError } = await admin.rpc("activate_saspay_subscription", {
+        p_billing_session_id: pendingBilling.id,
+      });
+      if (activationError) {
+        return jsonResponse({ error: "Paiement confirmé, mais l’activation a échoué. Contactez l’assistance sans repayer." }, 500);
+      }
+      return jsonResponse({ status: activationResult });
+    }
+
+    if (pendingStatus === "FAILED" || pendingStatus === "CANCELLED" || pendingStatus === "CANCELED") {
+      const { error: updateError } = await admin
+        .from("billing_sessions")
+        .update({ status: "failed" })
+        .eq("id", pendingBilling.id)
+        .eq("status", "pending");
+      if (updateError) {
+        return jsonResponse({ error: "La session annulée n’a pas pu être clôturée. Réessayez dans quelques instants." }, 500);
+      }
+    } else if (pendingBilling.plan === plan && pendingBilling.checkout_url) {
+      return jsonResponse({ checkout_url: pendingBilling.checkout_url });
+    } else {
+      return jsonResponse({ error: "Un paiement est déjà en cours. Terminez ou annulez cette session avant de choisir une autre formule." }, 409);
+    }
   }
 
   const { data: profile } = await admin.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
