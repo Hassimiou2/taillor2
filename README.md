@@ -1,5 +1,11 @@
 # TailorPro (taillor2)
 
+## Connexion Google
+
+La connexion et l’inscription par Google utilisent Supabase Auth. Dans Supabase, activez Google dans **Authentication > Sign In / Providers**, puis ajoutez `https://taillor2.vercel.app/app` aux URL de redirection autorisées dans **Authentication > URL Configuration**. Pour le développement local, ajoutez aussi `http://localhost:5173/app`.
+
+Dans la console Google Cloud, l’URI de redirection autorisée doit être l’URL de callback Supabase : `https://stfqugqurqiigiviuwbq.supabase.co/auth/v1/callback`. Le nom et l’adresse e-mail du compte Google sont utilisés pour initialiser le profil ; l’atelier est créé sous le nom « Mon atelier » et pourra être renommé dans les paramètres.
+
 ## Paiements SasPay (mode test)
 
 Le paiement utilise des fonctions Supabase Edge : `saspay-checkout` crée une session de paiement hébergée, `saspay-confirm` vérifie le statut après le retour du client, et `saspay-webhook` traite les notifications signées SasPay.
