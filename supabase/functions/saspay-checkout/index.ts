@@ -1,7 +1,20 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const productionAppUrl = "https://taillor2.vercel.app";
+const configuredAppUrl = Deno.env.get("APP_BASE_URL");
+const appBaseUrl = (() => {
+  if (!configuredAppUrl) return productionAppUrl;
+  try {
+    const url = new URL(configuredAppUrl);
+    if (url.protocol !== "https:" || url.pathname !== "/" || url.search || url.hash) return productionAppUrl;
+    return url.origin;
+  } catch {
+    return productionAppUrl;
+  }
+})();
+
 const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("APP_BASE_URL") ?? "https://taillor2.vercel.app",
+  "Access-Control-Allow-Origin": productionAppUrl,
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
@@ -74,7 +87,6 @@ Deno.serve(async (request) => {
   }
   if (billingError || !billing) return jsonResponse({ error: "Impossible de préparer le paiement." }, 500);
 
-  const siteUrl = Deno.env.get("APP_BASE_URL") ?? "https://taillor2.vercel.app";
   let providerResponse: Response;
   try {
     providerResponse = await fetch("https://api.saspay.me/api/v1/checkout-sessions/", {
@@ -86,7 +98,7 @@ Deno.serve(async (request) => {
         description: `Abonnement TailorPro ${plan === "pro" ? "Pro" : "Premium"} - 1 mois`,
         customer_email: user.email,
         customer_name: profile?.full_name || user.email,
-        return_url: `${siteUrl}/app/subscription?billing_session=${billing.id}`,
+        return_url: `${appBaseUrl}/app/subscription?billing_session=${billing.id}`,
         metadata: { billing_session_id: billing.id, plan },
       }),
     });

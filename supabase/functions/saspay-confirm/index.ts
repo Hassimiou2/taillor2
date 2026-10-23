@@ -1,7 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const productionAppUrl = "https://taillor2.vercel.app";
+
 const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("APP_BASE_URL") ?? "https://taillor2.vercel.app",
+  "Access-Control-Allow-Origin": productionAppUrl,
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
