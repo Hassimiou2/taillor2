@@ -79,6 +79,34 @@ function App() {
   }, []);
 
   useEffect(() => {
+    const pageMetadata = {
+      "/login": {
+        title: "Connexion | TailorPro",
+        description: "Connectez-vous à votre espace TailorPro.",
+      },
+      "/register": {
+        title: "Créer un compte | TailorPro",
+        description: "Préparez votre espace TailorPro pour organiser votre atelier de couture.",
+      },
+      "/reset-password": {
+        title: "Réinitialiser le mot de passe | TailorPro",
+        description: "Réinitialisez le mot de passe de votre compte TailorPro.",
+      },
+    };
+    const metadata = route.startsWith("/app")
+      ? { title: "Espace privé | TailorPro", description: "Espace de gestion privé TailorPro." }
+      : pageMetadata[route] || { title: "Page introuvable | TailorPro", description: "Cette page TailorPro n’existe pas." };
+    const description = document.querySelector('meta[name="description"]');
+    const robots = document.querySelector('meta[name="robots"]');
+    const canonical = document.querySelector('link[rel="canonical"]');
+
+    document.title = metadata.title;
+    description?.setAttribute("content", metadata.description);
+    if (robots) robots.content = "noindex, nofollow";
+    canonical?.remove();
+  }, [route]);
+
+  useEffect(() => {
     if (!supabase) {
       setAuthReady(true);
       return undefined;
