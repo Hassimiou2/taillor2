@@ -39,6 +39,20 @@ const dateFormat = (value, options = { day: "numeric", month: "short", year: "nu
   value ? new Intl.DateTimeFormat("fr-FR", options).format(new Date(`${value.slice(0, 10)}T12:00:00`)) : "Non définie";
 const monthKey = new Date().toISOString().slice(0, 7);
 const getRoute = () => window.location.pathname.replace(/\/+$/, "") || "/";
+const measurementProfiles = {
+  man: {
+    title: "Profil homme",
+    description: "Mesures conseillées pour les tenues masculines. Vous pouvez ajouter les mesures propres au vêtement.",
+    fields: [["bust","Tour de poitrine"],["waist","Tour de taille"],["hips","Tour de hanches"],["shoulders","Largeur des épaules"],["sleeve_length","Longueur des manches"],["garment_length","Longueur du boubou / haut"],["neck","Tour de cou"],["arm","Tour de bras"],["trouser_length","Longueur du pantalon"],["thigh","Tour de cuisse"],["inseam","Entrejambe"]],
+    custom: ["Longueur de veste", "Largeur du dos"],
+  },
+  other: {
+    title: "Profil femme, enfant ou autre",
+    description: "Mesures conseillées pour les robes, jupes et autres tenues. Vous pouvez ajouter les mesures propres au vêtement.",
+    fields: [["bust","Tour de poitrine / buste"],["waist","Tour de taille"],["hips","Tour de hanches"],["shoulders","Largeur des épaules"],["sleeve_length","Longueur des manches"],["garment_length","Longueur de la robe / tenue"],["neck","Tour de cou"],["arm","Tour de bras"],["trouser_length","Longueur du pantalon"],["thigh","Tour de cuisse"],["inseam","Entrejambe"]],
+    custom: ["Tour sous poitrine", "Longueur de jupe"],
+  },
+};
 
 function navigate(path) {
   window.history.pushState({}, "", path);
@@ -46,11 +60,11 @@ function navigate(path) {
   window.scrollTo(0, 0);
 }
 
-function CustomMeasurements() {
-  const [rows, setRows] = useState([0]);
+function CustomMeasurements({ suggestions = [] }) {
+  const [rows, setRows] = useState(() => [...suggestions.map((_, index) => index), suggestions.length]);
   return <div className="custom-measurements">
     <div className="form-section-title"><strong>Mesures personnalisées</strong><button type="button" className="text-button" onClick={() => setRows((current) => [...current, current.length])}>+ Ajouter</button></div>
-    {rows.map((row) => <div className="custom-measure-row" key={row}><Field label="Nom" name="custom_measurement_name" placeholder="Ex. Poignet" /><Field label="Valeur (cm)" name="custom_measurement_value" type="number" min="0.1" step="0.1" /></div>)}
+    {rows.map((row) => <div className="custom-measure-row" key={row}><Field label="Nom" name="custom_measurement_name" placeholder="Ex. Poignet" defaultValue={suggestions[row] || ""} /><Field label="Valeur (cm)" name="custom_measurement_value" type="number" min="0.1" step="0.1" /></div>)}
   </div>;
 }
 
@@ -415,14 +429,14 @@ function PageHeading({ eyebrow, title, description, action }) {
   return <div className="page-heading"><div><span className="app-eyebrow">{eyebrow}</span><h1>{title}</h1><p>{description}</p></div>{action}</div>;
 }
 
-function Modal({ title, onClose, children }) {
+function Modal({ title, onClose, children, className = "" }) {
   useEffect(() => {
     const onKey = (event) => { if (event.key === "Escape") onClose(); };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
-  return <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <section role="dialog" aria-modal="true" aria-labelledby="modal-title" className="modal-card">
+  return <div className={`modal-backdrop ${className ? `${className}-overlay` : ""}`.trim()} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <section role="dialog" aria-modal="true" aria-labelledby="modal-title" className={`modal-card ${className}`.trim()}>
       <header><h2 id="modal-title">{title}</h2><button onClick={onClose} aria-label="Fermer">×</button></header>
       {children}
     </section>
@@ -474,13 +488,14 @@ function WorkspacePage({ page, data, refresh, user }) {
   }
 
   const visibleClients = useMemo(() => data.clients.filter((client) => !client.archived_at &&
-    `${client.full_name} ${client.phone}`.toLocaleLowerCase("fr").includes(query.toLocaleLowerCase("fr"))), [data.clients, query]);
+    `${client.full_name} ${client.phone} ${client.email || ""}`.toLocaleLowerCase("fr").includes(query.toLocaleLowerCase("fr"))), [data.clients, query]);
   const visibleMeasurementClients = useMemo(() => data.clients.filter((client) => !client.archived_at &&
-    `${client.full_name} ${client.phone}`.toLocaleLowerCase("fr").includes(query.toLocaleLowerCase("fr"))), [data.clients, query]);
+    `${client.full_name} ${client.phone} ${client.email || ""}`.toLocaleLowerCase("fr").includes(query.toLocaleLowerCase("fr"))), [data.clients, query]);
   const visibleOrders = useMemo(() => data.orders.filter((order) => !order.archived_at &&
     (filter === "all" || order.status === filter) &&
     `${order.reference} ${order.clients?.full_name || ""} ${order.order_items?.map((item) => item.garment_name).join(" ") || ""}`.toLocaleLowerCase("fr").includes(query.toLocaleLowerCase("fr"))), [data.orders, filter, query]);
   const activeModels = data.models.filter((model) => !model.archived_at);
+  const measurementProfile = modal?.item?.gender === "man" ? measurementProfiles.man : measurementProfiles.other;
 
   const renderContent = () => {
     switch (page) {
@@ -506,8 +521,15 @@ function WorkspacePage({ page, data, refresh, user }) {
     const formValue = (name) => String(values.get(name) || "").trim();
     const workshopId = data.workshop.id;
     if (modal.type === "client") {
-      const payload = { full_name: formValue("full_name"), phone: formValue("phone"), address: formValue("address") || null, notes: formValue("notes") || null };
-      if (!payload.full_name || !payload.phone) return setNotice("Le nom et le téléphone du client sont obligatoires.");
+      const payload = {
+        full_name: [formValue("first_name"), formValue("last_name")].filter(Boolean).join(" "),
+        phone: formValue("phone"),
+        email: formValue("email").toLocaleLowerCase("fr") || null,
+        gender: formValue("gender") || null,
+        address: formValue("address") || null,
+        notes: formValue("notes") || null,
+      };
+      if (!formValue("first_name") || !formValue("last_name") || !payload.phone) return setNotice("Le prénom, le nom et le téléphone du client sont obligatoires.");
       return runAction(async () => {
         if (modal.item) await supabase.from("clients").update(payload).eq("id", modal.item.id).eq("workshop_id", workshopId).throwOnError();
         else await supabase.from("clients").insert({ ...payload, workshop_id: workshopId }).throwOnError();
@@ -612,19 +634,35 @@ function WorkspacePage({ page, data, refresh, user }) {
   return <>
     {renderContent()}
     {notice && <div className={`tp-toast ${notice.includes("échoué") || notice.includes("dépasse") || notice.includes("obligatoires") || notice.includes("valid") ? "warning" : ""}`} role="status"><span>{notice}</span><button onClick={() => setNotice("")} aria-label="Fermer le message">×</button></div>}
-    {modal && <Modal title={modalTitle} onClose={() => setModal(null)}>
+    {modal && <Modal title={modalTitle} onClose={() => setModal(null)} className={modal.type === "client" ? "client-modal" : ""}>
       {modal.type === "measurements" && <MeasurementHistory measurements={data.measurements.filter((measurement) => measurement.client_id === modal.item.id)} />}
       <form className="tp-form modal-form" onSubmit={saveForm}>
         {modal.type === "client" && <>
-          <Field label="Nom complet" name="full_name" required defaultValue={modal.item?.full_name || ""} />
-          <Field label="Téléphone" name="phone" type="tel" required defaultValue={modal.item?.phone || ""} />
-          <Field label="Adresse (facultative)" name="address" defaultValue={modal.item?.address || ""} />
-          <Field label="Notes" name="notes" type="textarea" defaultValue={modal.item?.notes || ""} rows="3" />
+          <div className="client-form-grid">
+            <Field label="Prénom" name="first_name" required autoComplete="given-name" placeholder="Ex. Aïssatou" defaultValue={modal.item?.full_name?.trim().split(/\s+/)[0] || ""} />
+            <Field label="Nom" name="last_name" required autoComplete="family-name" placeholder="Ex. Diallo" defaultValue={modal.item?.full_name?.trim().split(/\s+/).slice(1).join(" ") || ""} />
+            <Field label="Téléphone" name="phone" type="tel" required autoComplete="tel" placeholder="+221 77 000 00 00" defaultValue={modal.item?.phone || ""} />
+            <Field label="E-mail (facultatif)" name="email" type="email" autoComplete="email" placeholder="nom@exemple.com" defaultValue={modal.item?.email || ""} />
+            <label className="tp-field client-gender">Sexe (facultatif)
+              <select name="gender" defaultValue={modal.item?.gender || ""}>
+                <option value="">— Choisir —</option>
+                <option value="man">Homme</option>
+                <option value="woman">Femme</option>
+                <option value="boy">Garçon</option>
+                <option value="girl">Fille</option>
+                <option value="other">Autre</option>
+                <option value="unspecified">Préfère ne pas préciser</option>
+              </select>
+            </label>
+            <Field label="Adresse (facultative)" name="address" autoComplete="street-address" placeholder="Quartier, ville" defaultValue={modal.item?.address || ""} />
+            <Field label="Notes (facultatives)" name="notes" type="textarea" defaultValue={modal.item?.notes || ""} rows="3" />
+          </div>
         </>}
         {modal.type === "measurements" && <>
           <Field label="Date des mesures" name="measured_on" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required />
-          <div className="measurement-fields">{[["bust","Tour de poitrine"],["waist","Tour de taille"],["hips","Tour de hanches"],["shoulders","Largeur des épaules"],["sleeve_length","Longueur des manches"],["garment_length","Longueur du vêtement"],["neck","Tour de cou"],["arm","Tour de bras"],["trouser_length","Longueur du pantalon"],["thigh","Tour de cuisse"],["inseam","Entrejambe"]].map(([name,label]) => <Field key={name} label={`${label} (cm)`} name={name} type="number" min="0.1" step="0.1" />)}</div>
-          <CustomMeasurements />
+          <div className="measurement-profile"><strong>{measurementProfile.title}</strong><p>{measurementProfile.description}</p></div>
+          <div className="measurement-fields">{measurementProfile.fields.map(([name,label]) => <Field key={name} label={`${label} (cm)`} name={name} type="number" min="0.1" step="0.1" />)}</div>
+          <CustomMeasurements suggestions={measurementProfile.custom} />
           <Field label="Notes complémentaires" name="notes" type="textarea" rows="2" />
           <p className="form-hint">Les nouvelles mesures sont ajoutées à l’historique ; les fiches précédentes restent consultables.</p>
         </>}
@@ -638,7 +676,7 @@ function WorkspacePage({ page, data, refresh, user }) {
         {modal.type === "order" && <OrderForm clients={data.clients.filter((client) => !client.archived_at)} models={activeModels} />}
         {modal.type === "order-edit" && <OrderEditForm order={modal.item} />}
         {modal.type === "payment" && <PaymentForm order={modal.item} payments={data.payments} />}
-        <div className="modal-actions"><button type="button" className="tp-button secondary" onClick={() => setModal(null)}>Annuler</button><button className="tp-button primary" disabled={busy}>{busy ? "Enregistrement…" : modal.type === "measurements" ? "Ajouter les mesures" : modal.type === "payment" ? "Enregistrer le paiement" : "Enregistrer"}</button></div>
+        <div className="modal-actions"><button type="button" className="tp-button secondary" onClick={() => setModal(null)}>Annuler</button><button className="tp-button primary" disabled={busy}>{busy ? "Enregistrement…" : modal.type === "client" ? modal.item ? "Enregistrer le client" : "Ajouter le client" : modal.type === "measurements" ? "Ajouter les mesures" : modal.type === "payment" ? "Enregistrer le paiement" : "Enregistrer"}</button></div>
       </form>
     </Modal>}
   </>;
@@ -694,7 +732,7 @@ function ClientsPage({ data, clients, query, setQuery, onCreate, onEdit, onArchi
     <div className="toolbar"><label className="search-field"><span>⌕</span><input aria-label="Rechercher un client" placeholder="Rechercher un nom ou un téléphone" value={query} onChange={(event) => setQuery(event.target.value)} /></label><span className="result-count">{clients.length} client{clients.length !== 1 ? "s" : ""}</span></div>
     {clients.length ? <div className="data-table-wrap"><table className="data-table"><thead><tr><th>CLIENT</th><th>TÉLÉPHONE</th><th>COMMANDES</th><th>FICHE CRÉÉE</th><th>ACTIONS</th></tr></thead><tbody>{clients.map((client) => {
       const orders = data.orders.filter((order) => order.client_id === client.id);
-      return <tr key={client.id}><td><strong>{client.full_name}</strong>{client.address && <small className="table-sub">{client.address}</small>}</td><td>{client.phone}</td><td>{orders.length}</td><td>{dateFormat(client.created_at)}</td><td><div className="row-actions"><button onClick={() => onEdit(client)}>Modifier</button><button className="danger-text" onClick={() => onArchive(client)}>Archiver</button></div></td></tr>;
+      return <tr key={client.id}><td><strong>{client.full_name}</strong>{client.address && <small className="table-sub">{client.address}</small>}</td><td>{client.phone}{client.email && <small className="table-sub">{client.email}</small>}</td><td>{orders.length}</td><td>{dateFormat(client.created_at)}</td><td><div className="row-actions"><button onClick={() => onEdit(client)}>Modifier</button><button className="danger-text" onClick={() => onArchive(client)}>Archiver</button></div></td></tr>;
     })}</tbody></table></div> : <EmptyState title="Aucun client pour le moment" text={query ? "Aucun résultat ne correspond à votre recherche." : "Ajoutez votre premier client pour conserver ses coordonnées et son historique."} />}
   </>;
 }
@@ -713,7 +751,8 @@ function MeasurementsPage({ data, clients, query, setQuery, onOpen, onAddClient 
 function MeasurementHistory({ measurements }) {
   return <div className="measurement-history"><h3>Historique des mesures</h3>{measurements.length ? measurements.map((measurement) => {
     const labels = [["bust","Poitrine"],["waist","Taille"],["hips","Hanches"],["shoulders","Épaules"],["sleeve_length","Manches"],["garment_length","Vêtement"],["neck","Cou"],["arm","Bras"],["trouser_length","Pantalon"],["thigh","Cuisse"],["inseam","Entrejambe"]];
-    return <details className="measure-history-item" key={measurement.id}><summary>{dateFormat(measurement.measured_on)} · en cm</summary><div className="measurement-values">{labels.filter(([key]) => measurement[key]).map(([key,label]) => <span key={key}>{label} <b>{measurement[key]} cm</b></span>)}</div>{measurement.notes && <p>{measurement.notes}</p>}</details>;
+    const customMeasurements = Object.entries(measurement.custom_measurements || {});
+    return <details className="measure-history-item" key={measurement.id}><summary>{dateFormat(measurement.measured_on)} · en cm</summary><div className="measurement-values">{labels.filter(([key]) => measurement[key]).map(([key,label]) => <span key={key}>{label} <b>{measurement[key]} cm</b></span>)}{customMeasurements.map(([label, value]) => <span key={`custom-${label}`}>{label} <b>{value} cm</b></span>)}</div>{measurement.notes && <p>{measurement.notes}</p>}</details>;
   }) : <p className="empty-inline">Aucune fiche de mesures enregistrée.</p>}</div>;
 }
 
